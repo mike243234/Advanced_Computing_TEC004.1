@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Job Market Intelligence</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,Helvetica,sans-serif;background:#f1f5f9;color:#1e293b}
+header{background:#4338ca;color:#fff}
+header .inner{max-width:1100px;margin:0 auto;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+header h1{margin:0;font-size:20px;font-weight:700}
+header p{margin:4px 0 0;font-size:13px;color:#c7d2fe}
+header button{background:#fff;color:#4338ca;border:none;border-radius:8px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer}
+header button:disabled{opacity:.6;cursor:default}
+#banner{max-width:1100px;margin:16px auto 0;padding:0 24px}
+#banner .box{border-radius:10px;padding:12px 16px;font-size:14px;display:none}
+#banner .running{display:block;background:#fef9c3;color:#854d0e}
+#banner .done{display:block;background:#dcfce7;color:#166534}
+#banner .error{display:block;background:#fee2e2;color:#991b1b}
+nav{background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.08);margin-top:16px}
+nav .inner{max-width:1100px;margin:0 auto;padding:0 24px;display:flex;flex-wrap:wrap;gap:2px}
+nav button{background:none;border:none;border-bottom:2px solid transparent;padding:14px 16px;font-size:14px;font-weight:500;color:#64748b;cursor:pointer}
+nav button.active{border-color:#4f46e5;color:#4338ca}
+main{max-width:1100px;margin:0 auto;padding:24px}
+.hidden{display:none}
+.grid{display:grid;gap:16px}
+.stats{grid-template-columns:repeat(2,1fr)}
+@media(min-width:768px){.stats{grid-template-columns:repeat(4,1fr)}}
+.two{grid-template-columns:1fr}
+@media(min-width:1024px){.two{grid-template-columns:1fr 1fr}}
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:20px}
+.card h2{margin:0 0 16px;font-size:16px;font-weight:600}
+.stat .num{font-size:30px;font-weight:700;color:#4338ca}
+.stat .label{margin-top:4px;color:#64748b;font-size:14px}
+.space>*+*{margin-top:24px}
+.chart-box{position:relative;height:380px}
+input,select,textarea{border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;width:100%}
+.filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.filters input,.filters select{flex:1;min-width:160px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 12px}
+thead tr{background:#f1f5f9}
+tbody tr{border-bottom:1px solid #e2e8f0}
+.badge{display:inline-block;background:#eef2ff;color:#4338ca;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}
+.pager{display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:14px;color:#64748b}
+.pager .group{display:flex;align-items:center;gap:10px}
+button.btn{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 12px;font-size:14px;cursor:pointer}
+button.btn:disabled{opacity:.4;cursor:default}
+button.primary{background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer;margin-top:12px}
+.list li{display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding:8px 0;font-size:14px}
+.list{list-style:none;margin:0;padding:0}
+.list .name{font-weight:600}
+.list .gap-name{font-weight:600;color:#e11d48}
+.list .meta{color:#64748b}
+.dl{display:inline-block;color:#fff;border-radius:8px;padding:10px 16px;font-size:14px;text-decoration:none;margin-right:12px}
+.dl.csv{background:#059669}
+.dl.json{background:#4f46e5}
+.muted{color:#94a3b8;font-size:12px;margin-top:16px}
+.note{color:#475569;font-size:14px;margin:0 0 16px}
+</style>
+</head>
+<body>
+<header>
+<div class="inner">
+<div>
+<h1>Job Market Intelligence System</h1>
+<p>Thi truong viec lam IT Viet Nam</p>
+</div>
+<button id="refresh">Thu thap lai</button>
+</div>
+</header>
+<div id="banner"><div class="box" id="banner-box"></div></div>
+<nav>
+<div class="inner" id="tabs">
+<button data-tab="dashboard" class="active">Dashboard</button>
+<button data-tab="jobs">Viec lam</button>
+<button data-tab="analysis">Phan tich</button>
+<button data-tab="recommendation">Goi y</button>
+<button data-tab="reports">Xuat bao cao</button>
+</div>
+</nav>
+<main>
+<section id="dashboard" class="space">
+<div class="grid stats">
+<div class="card stat"><div class="num" id="stat-jobs">0</div><div class="label">Tin tuyen dung</div></div>
+<div class="card stat"><div class="num" id="stat-companies">0</div><div class="label">Cong ty</div></div>
+<div class="card stat"><div class="num" id="stat-skills">0</div><div class="label">Ky nang</div></div>
+<div class="card stat"><div class="num" id="stat-sources">0</div><div class="label">Nguon du lieu</div></div>
+</div>
+<div class="grid two">
+<div class="card"><h2>Top 10 ky nang duoc yeu cau</h2><div class="chart-box"><canvas id="chart-top10"></canvas></div></div>
+<div class="card"><h2>So tin theo nguon</h2><div class="chart-box"><canvas id="chart-sources"></canvas></div></div>
+</div>
+</section>
+<section id="jobs" class="hidden">
+<div class="card">
+<h2>Danh sach viec lam</h2>
+<div class="filters">
+<input id="job-search" placeholder="Tim theo vi tri hoac cong ty" />
+<input id="job-location" placeholder="Loc theo dia diem" />
+<select id="job-source"><option value="">Tat ca nguon</option></select>
+</div>
+<div style="overflow-x:auto">
+<table>
+<thead><tr><th>Vi tri</th><th>Cong ty</th><th>Dia diem</th><th>Luong (trieu)</th><th>Cap bac</th><th>Nguon</th></tr></thead>
+<tbody id="job-rows"></tbody>
+</table>
+</div>
+<div class="pager">
+<span id="job-total">Tong: 0 tin</span>
+<div class="group">
+<button class="btn" id="job-prev">Truoc</button>
+<span id="job-page">Trang 1 / 1</span>
+<button class="btn" id="job-next">Sau</button>
+</div>
+</div>
+</div>
+</section>
+<section id="analysis" class="hidden">
+<div class="grid two">
+<div class="card"><h2>Top 20 ky nang</h2><div class="chart-box"><canvas id="chart-skills"></canvas></div></div>
+<div class="card"><h2>Luong trung vi theo vi tri (trieu VND)</h2><div class="chart-box"><canvas id="chart-salary"></canvas></div></div>
+<div class="card"><h2>Phan bo theo cap bac</h2><div class="chart-box"><canvas id="chart-exp"></canvas></div></div>
+<div class="card"><h2>Phan bo theo dia diem</h2><div class="chart-box"><canvas id="chart-location"></canvas></div></div>
+</div>
+</section>
+<section id="recommendation" class="space hidden">
+<div class="card">
+<h2>Ky nang hien tai cua ban</h2>
+<textarea id="rec-input" rows="3">Python, HTML, CSS</textarea>
+<button class="primary" id="rec-run">Phan tich khoang cach ky nang</button>
+</div>
+<div class="grid two">
+<div class="card"><h2>Ky nang nen hoc (gia tri cao)</h2><ul class="list" id="rec-list"></ul></div>
+<div class="card"><h2>Khoang cach ky nang (ban con thieu)</h2><ul class="list" id="gap-list"></ul></div>
+</div>
+</section>
+<section id="reports" class="hidden">
+<div class="card">
+<h2>Xuat du lieu</h2>
+<p class="note">Tai du lieu viec lam da thu thap duoi dang CSV hoac JSON.</p>
+<a class="dl csv" href="/api/export/csv">Export CSV</a>
+<a class="dl json" href="/api/export/json">Export JSON</a>
+<p class="muted">Bao cao markdown chi tiet nam trong data/reports sau khi chay main.py.</p>
+</div>
+</section>
+</main>
+<script>
+const colors=["#4f46e5","#059669","#d97706","#dc2626","#0891b2","#7c3aed","#db2777","#65a30d"];
+const charts={};
+function api(path,options){return fetch(path,options).then(r=>r.json());}
+function makeBar(id,labels,values,color,horizontal){
+if(charts[id]){charts[id].destroy();}
+const ctx=document.getElementById(id);
+charts[id]=new Chart(ctx,{type:"bar",data:{labels:labels,datasets:[{data:values,backgroundColor:color,borderRadius:4}]},options:{indexAxis:horizontal?"y":"x",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true},y:{beginAtZero:true}}}});
+}
+function makePie(id,labels,values){
+if(charts[id]){charts[id].destroy();}
+const ctx=document.getElementById(id);
+charts[id]=new Chart(ctx,{type:"pie",data:{labels:labels,datasets:[{data:values,backgroundColor:colors}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});
+}
+const tabs=document.getElementById("tabs");
+const sections={dashboard:document.getElementById("dashboard"),jobs:document.getElementById("jobs"),analysis:document.getElementById("analysis"),recommendation:document.getElementById("recommendation"),reports:document.getElementById("reports")};
+let activeTab="dashboard";
+tabs.addEventListener("click",function(event){
+const button=event.target.closest("button");
+if(!button)return;
+activeTab=button.dataset.tab;
+Array.from(tabs.children).forEach(b=>b.classList.toggle("active",b===button));
+Object.keys(sections).forEach(key=>sections[key].classList.toggle("hidden",key!==activeTab));
+loadTab(activeTab);
+});
+function loadTab(tab){
+if(tab==="dashboard")loadDashboard();
+if(tab==="jobs")loadJobs();
+if(tab==="analysis")loadAnalysis();
+}
+function loadDashboard(){
+api("/api/stats").then(s=>{document.getElementById("stat-jobs").textContent=s.jobs;document.getElementById("stat-companies").textContent=s.companies;document.getElementById("stat-skills").textContent=s.skills;document.getElementById("stat-sources").textContent=s.sources;});
+api("/api/skills?limit=10").then(d=>{const items=d.items.slice().reverse();makeBar("chart-top10",items.map(x=>x.skill),items.map(x=>x.demand),"#4f46e5",true);});
+api("/api/sources").then(d=>{makeBar("chart-sources",d.items.map(x=>x.source),d.items.map(x=>x.total),"#0891b2",false);fillSources(d.items);});
+}
+let sourcesFilled=false;
+function fillSources(items){
+if(sourcesFilled)return;
+sourcesFilled=true;
+const select=document.getElementById("job-source");
+items.forEach(x=>{const option=document.createElement("option");option.value=x.source;option.textContent=x.source+" ("+x.total+")";select.appendChild(option);});
+}
+let jobSearch="",jobLocation="",jobSource="",jobPage=1,jobPages=1;
+function loadJobs(){
+api("/api/jobs?"+new URLSearchParams({search:jobSearch,location:jobLocation,source:jobSource,page:jobPage,size:20})).then(data=>{
+const rows=document.getElementById("job-rows");
+rows.innerHTML="";
+data.items.forEach(job=>{
+const tr=document.createElement("tr");
+const salary=job.salary_mid>0?job.salary_mid:"-";
+tr.innerHTML="<td><strong>"+job.title+"</strong></td><td>"+job.company+"</td><td>"+job.location+"</td><td>"+salary+"</td><td>"+job.level+"</td><td><span class='badge'>"+job.source+"</span></td>";
+rows.appendChild(tr);
+});
+jobPages=Math.max(1,Math.ceil(data.total/data.size));
+document.getElementById("job-total").textContent="Tong: "+data.total+" tin";
+document.getElementById("job-page").textContent="Trang "+jobPage+" / "+jobPages;
+document.getElementById("job-prev").disabled=jobPage<=1;
+document.getElementById("job-next").disabled=jobPage>=jobPages;
+});
+}
+document.getElementById("job-search").addEventListener("input",function(e){jobSearch=e.target.value;jobPage=1;loadJobs();});
+document.getElementById("job-location").addEventListener("input",function(e){jobLocation=e.target.value;jobPage=1;loadJobs();});
+document.getElementById("job-source").addEventListener("change",function(e){jobSource=e.target.value;jobPage=1;loadJobs();});
+document.getElementById("job-prev").addEventListener("click",function(){if(jobPage>1){jobPage--;loadJobs();}});
+document.getElementById("job-next").addEventListener("click",function(){if(jobPage<jobPages){jobPage++;loadJobs();}});
+function loadAnalysis(){
+api("/api/analysis").then(data=>{
+const skills=data.top_skills.slice().reverse();
+makeBar("chart-skills",skills.map(x=>x.skill),skills.map(x=>x.demand),"#4f46e5",true);
+const salary=data.salary_by_role.slice(0,12).reverse();
+makeBar("chart-salary",salary.map(x=>x.title),salary.map(x=>x.median_salary),"#d97706",true);
+makeBar("chart-exp",data.experience.map(x=>x.level),data.experience.map(x=>x.total),"#059669",false);
+makePie("chart-location",data.location.map(x=>x.location),data.location.map(x=>x.total));
+});
+}
+document.getElementById("rec-run").addEventListener("click",function(){
+const skills=document.getElementById("rec-input").value.split(",").map(s=>s.trim()).filter(s=>s.length>0);
+const button=this;
+button.textContent="Dang phan tich...";
+api("/api/recommendations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({skills:skills})}).then(data=>{
+const recList=document.getElementById("rec-list");
+recList.innerHTML="";
+data.recommended.forEach(item=>{const li=document.createElement("li");li.innerHTML="<span class='name'>"+item.skill+"</span><span class='meta'>nhu cau "+item.demand+"</span>";recList.appendChild(li);});
+const gapList=document.getElementById("gap-list");
+gapList.innerHTML="";
+data.gap.forEach(item=>{const li=document.createElement("li");li.innerHTML="<span class='gap-name'>"+item.skill+"</span><span class='meta'>nhu cau "+item.demand+"</span>";gapList.appendChild(li);});
+button.textContent="Phan tich khoang cach ky nang";
+});
+});
+const bannerBox=document.getElementById("banner-box");
+const refreshButton=document.getElementById("refresh");
+let polling=false;
+function showBanner(state){
+if(state.status==="running"){bannerBox.className="box running";bannerBox.textContent=state.message||"Dang thu thap du lieu...";}
+else if(state.status==="error"){bannerBox.className="box error";bannerBox.textContent="Loi thu thap: "+(state.message||"");}
+else if(state.status==="done"){bannerBox.className="box done";bannerBox.textContent=(state.message||"Hoan tat")+(state.last_run?(" luc "+state.last_run):"");}
+else{bannerBox.className="box";bannerBox.textContent="";}
+}
+function pollStatus(){
+api("/api/status").then(state=>{
+showBanner(state);
+refreshButton.disabled=state.status==="running";
+if(state.status==="running"){polling=true;setTimeout(pollStatus,2000);}
+else if(polling){polling=false;sourcesFilled=false;loadTab(activeTab);}
+});
+}
+refreshButton.addEventListener("click",function(){
+api("/api/scrape",{method:"POST"}).then(()=>{polling=true;pollStatus();});
+});
+loadDashboard();
+pollStatus();
+</script>
+</body>
+</html>
