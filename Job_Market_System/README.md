@@ -2,13 +2,6 @@
 
 He thong phan tich thi truong viec lam IT Viet Nam. Chi can mot server Python FastAPI duy nhat de chay ca backend (API) va frontend (HTML thuan). Du lieu duoc tu dong thu thap ngay khi khoi dong web.
 
-## Tao moi truong ao de host web app
-...
-
-Window: venv\Scripts\activate
-Mac\Linux: source venv/bin/activate
-
-
 ## Cai dat
 
 ```
